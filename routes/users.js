@@ -14,7 +14,7 @@ let Success_response = {
     "data": 
         {
           "user" : {},
-          "date" : ""
+          "date" : ``
         }
 };
 
@@ -36,20 +36,19 @@ router.post('/', urlencodedParser, [
   ], 
     //資料輸入錯誤，alert錯誤訊息
     (req, res)=> {
-    const errors = validationResult(req)
-    if(!errors.isEmpty()) {
-        //return res.status(422).jsonp(errors.array())
-        const alert = errors.array()
-        res.render('users', {
-            alert
-        });
+    const errors = validationResult(req);
+    //將使用者輸入值從req.body中拿出並存進對應變數
+    const {username, email, password} = req.body;
+    if(!errors.isEmpty()) 
+    {
+    //return res.status(422).jsonp(errors.array())
+    //const alert = errors.array();
+    //res.send(alert);
+    res.status(400).send('Client error response: 400');
     }
     //資料輸入正確，準備存成JSON型態並INSERT進database中
     else
     { 
-    //將使用者輸入值從req.body中拿出並存進對應變數
-    const {username, email, password} = req.body;
-
     connection.query(
     "INSERT INTO `user`(name, email, password) VALUES (?, ?, ?)",
     [username, email, password],
@@ -58,7 +57,7 @@ router.post('/', urlencodedParser, [
         if (err)
         { 
         console.log(err);
-        res.status(400).send('Client error response: 400');
+        res.status(403).send('Email Already Exists: 403');
         }
         //資料存入資料庫成功，擷取ID後redirect至有對應query String的route
         else
@@ -72,7 +71,7 @@ router.post('/', urlencodedParser, [
             function (err, results, fields) {
             if (err) 
             {
-            res.status(400).send('Client Error Response: 400');
+            res.status(400).send('Client error response: 400');
             }
             else
             {
@@ -83,9 +82,9 @@ router.post('/', urlencodedParser, [
             res.status = 200;
             console.log(`Get Response Successfully: ${res.status}`);
             res.send(Success_response);
+            //res.redirect(`/users?id=${userId}`);
             };
         });
-        //res.redirect(`/users?id=${userId}`);
         }
     });
     }
@@ -99,20 +98,26 @@ router.get('/', (req, res)=>{
             'SELECT id, name, email FROM user AS u WHERE u.id = ?',
             [userId],
             function (err, results, fields) {
+            //用輸入的id沒有對應unique key => 此id不存在
             if (err) 
             {
-            res.status(400).send('Client Error Response: 400');
+            res.status(400).send('Client error response: 400');
             }
-            else
-            {
+            //確定results有拿到東西，不是一個空的
             //Response Object(要放入Query API，含有id, name, email)
+            else if (results.length > 0) 
+            {
             Success_response.data.user = results[0];
             const date = req.headers['request-date'];
             Success_response.data.date = date;
             res.status = 200;
             console.log(`Get Response Successfully: ${res.status}`);
             res.send(Success_response);
-            };
+            }
+            //確定results是空的 => 此id值在資料庫裡還沒有對應的內容(超過目前有值的範圍)
+            else{
+                res.status(400).send('User Not Existing: 403');
+            }
         });
 });
 

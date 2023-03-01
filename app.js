@@ -40,6 +40,8 @@ createTerminus(server, {
   onSignal
 });
 
+
+/*
 //錯誤處理1 Email Already Exist
 app.use((req, res, next) => {
   const err = new Error('Email Already Exists: 403');
@@ -60,13 +62,15 @@ app.use((req, res, next) => {
   err.status = 400;
   next(err);
 });
+
 //錯誤處理render出錯誤訊息於頁面上
 app.use((err, req, res, next) => {
   res.locals.error = err;
   const status = err.status || 500;
   res.status(status);
-  res.render('error');
+  res.send('error');
 });
+*/
 
 //HealthCheck服務監聽位址 
 server.listen(3000, ()=>{
