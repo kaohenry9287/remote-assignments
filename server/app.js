@@ -3,16 +3,27 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const mysql = require('mysql2');
+const cors = require("cors");
 
 const app = express();
 
 app.use(bodyParser.json());
+//確保資料是會以json型態送來後端
+app.use(express.json());
+
+//確保資料能從前後端互相跨越傳送
+app.use(
+  cors({
+    origin: ["http://localhost:3000"],
+    methods: ["GET", "POST"],
+    credentials: true,
+  })
+);
+
+app.use(cookieParser());
 
 //healthcare需要
 const { createTerminus } = require('@godaddy/terminus');
-
-//view engine setup
-app.set('view engine', 'ejs');
 
 //使用route
 const mainRoutes = require('./routes');
@@ -40,39 +51,7 @@ createTerminus(server, {
   onSignal
 });
 
-
-/*
-//錯誤處理1 Email Already Exist
-app.use((req, res, next) => {
-  const err = new Error('Email Already Exists: 403');
-  err.status = 403;
-  next(err);
-});
-
-//錯誤處理2 User Not Existing
-app.use((req, res, next) => {
-  const err = new Error('User Not Existing: 403');
-  err.status = 403;
-  next(err);
-});
-
-//錯誤處理3 Client Error Response
-app.use((req, res, next) => {
-  const err = new Error('Client Error Response: 400');
-  err.status = 400;
-  next(err);
-});
-
-//錯誤處理render出錯誤訊息於頁面上
-app.use((err, req, res, next) => {
-  res.locals.error = err;
-  const status = err.status || 500;
-  res.status(status);
-  res.send('error');
-});
-*/
-
 //HealthCheck服務監聽位址 
-server.listen(3000, ()=>{
-  console.log('The application is running on localhost:3000!');
+server.listen(5000, ()=>{
+  console.log('The application is running on localhost:5000!');
 });
