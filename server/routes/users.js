@@ -38,7 +38,7 @@ router.post('/', urlencodedParser, [
     check('password', 'Password should contain at least three of the four character types: 1.Uppercase letter(A~Z) 2.Lowercase letter(a~z) 3.Numbers(0~9) 4.Symbols')
         .exists()
         .isLength({ max: 255 })
-        .matches(/^[A-Za-z0-9]*$/)
+        .matches(/(?=.{3,})((?=.*\d)(?=.*[a-z])(?=.*[A-Z])|(?=.*\d)(?=.*[a-zA-Z])(?=.*[\W_])|(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_])).*/)
     ], 
 
     //資料輸入錯誤，alert錯誤訊息
