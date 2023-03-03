@@ -41,7 +41,7 @@ function App() {
         <div className="form">
           <div className="form-group">
             <label className="form-label">name: </label>
-            <input type="text" onChange={(e)=>{setUsernameSignup(e.target.value)}} className="form-control" name="username"></input>
+            <input type="text" onChange={(e)=>{setUsernameSignup(e.target.value)}} className="form-control" name="name"></input>
           </div>
           <div className="form-group">
             <label className="form-label">email: </label>

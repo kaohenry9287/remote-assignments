@@ -26,7 +26,7 @@ let Success_response = {
 // (POST) User Sign Up API （限制輸入的內容，符合條件時把填入資料送入database，並轉跳至users頁面）
 router.post('/', urlencodedParser, [
     //使用express-validator的功能來驗證使用者input內容是否符合規範(express-validator會自己去request裡面找對應的值)
-    check('username', 'Your username could only contain English alphabet and number!')
+    check('name', 'Your username could only contain English alphabet and number!')
         .exists()
         .isLength({ max: 32 })
         .matches(/^[A-Za-z0-9]*$/),
