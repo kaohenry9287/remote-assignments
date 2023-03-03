@@ -1,0 +1,57 @@
+const http = require('http');
+const express = require('express');
+const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
+const mysql = require('mysql2');
+const cors = require("cors");
+
+const app = express();
+
+app.use(bodyParser.json());
+//確保資料是會以json型態送來後端
+app.use(express.json());
+
+//確保資料能從前後端互相跨越傳送
+app.use(
+  cors({
+    origin: ["http://localhost:3000"],
+    methods: ["GET", "POST"],
+    credentials: true,
+  })
+);
+
+app.use(cookieParser());
+
+//healthcare需要
+const { createTerminus } = require('@godaddy/terminus');
+
+//使用route
+const mainRoutes = require('./routes');
+const usersRoutes = require('./routes/users');
+
+app.use(mainRoutes);
+app.use('/users', usersRoutes)
+
+const server = http.createServer(app);
+
+//HealthCheck服務相關
+function onSignal () {
+  console.log('server is starting cleanup')
+  // start cleanup of resource, like databases or file descriptors
+}
+
+async function onHealthCheck () {
+  // checks if the system is healthy, like the db connection is live
+  // resolves, if health, rejects if not
+}
+
+createTerminus(server, {
+  signal: 'SIGINT',
+  healthChecks: { '/healthcheck': onHealthCheck },
+  onSignal
+});
+
+//HealthCheck服務監聽位址 
+server.listen(5000, ()=>{
+  console.log('The application is running on localhost:5000!');
+});
