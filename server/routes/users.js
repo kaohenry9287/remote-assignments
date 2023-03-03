@@ -38,7 +38,7 @@ router.post('/', urlencodedParser, [
     check('password', 'Password should contain at least three of the four character types: 1.Uppercase letter(A~Z) 2.Lowercase letter(a~z) 3.Numbers(0~9) 4.Symbols')
         .exists()
         .isLength({ max: 255 })
-        .matches(/(?=.{3,})((?=.*\d)(?=.*[a-z])(?=.*[A-Z])|(?=.*\d)(?=.*[a-zA-Z])(?=.*[\W_])|(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_])).*/)
+        .matches(/^[A-Za-z0-9]*$/)
     ], 
 
     //資料輸入錯誤，alert錯誤訊息
@@ -46,7 +46,7 @@ router.post('/', urlencodedParser, [
     const errors = validationResult(req);
 
     //將使用者輸入值從req.body中拿出並存進對應變數
-    const {username, email, password} = req.body;
+    const {name, email, password} = req.body;
     
     if(!errors.isEmpty()) 
     {
@@ -63,7 +63,7 @@ router.post('/', urlencodedParser, [
         }
     connection.query(
     "INSERT INTO `user`(name, email, password) VALUES (?, ?, ?)",
-    [username, email, hash],
+    [name, email, hash],
     function(err, results, fields) {
         //存入資料庫失敗，進行錯誤處理
         if (err)
