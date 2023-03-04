@@ -2,10 +2,12 @@ const http = require('http');
 const express = require('express');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
-const mysql = require('mysql2');
 const cors = require("cors");
 
+
 const app = express();
+
+const server = http.createServer(app);
 
 app.use(bodyParser.json());
 //確保資料是會以json型態送來後端
@@ -25,14 +27,9 @@ app.use(cookieParser());
 //healthcare需要
 const { createTerminus } = require('@godaddy/terminus');
 
-//使用route
-const mainRoutes = require('./routes');
+//使用user route
 const usersRoutes = require('./routes/users');
-
-app.use(mainRoutes);
 app.use('/users', usersRoutes)
-
-const server = http.createServer(app);
 
 //HealthCheck服務相關
 function onSignal () {
