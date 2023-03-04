@@ -16,7 +16,7 @@ function App() {
 
   //用Axios把前端輸入資料送給後端
   const signup = () => {
-    Axios.post("http://localhost:5000/users", {
+    Axios.post("http://54.167.174.166:5000/users", {
       name: nameSignup,
       email: emailSignup,
       password: passwordSignup,
