@@ -14,7 +14,7 @@ app.use(express.json());
 //確保資料能從前後端互相跨越傳送
 app.use(
   cors({
-    origin: ["http://54.167.174.166:3000"],
+    origin: true,
     methods: ["GET", "POST"],
     credentials: true,
   })
