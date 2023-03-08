@@ -4,25 +4,38 @@ const mysql = require('mysql2');
 require('dotenv').config();
 
 //建立資料庫連接
-const connection = mysql.createConnection({
+const pool = mysql.createPool({
     host: process.env.HOST,
     port: process.env.PORT,
     user: "admin",
     database: process.env.DATABASE,
-    password: process.env.PASSWORD
+    password: process.env.PASSWORD,
+    waitForConnections: true,
+    connectionLimit: 10,
+    idleTimeout: 60000,
+    queueLimit: 0
 });
 
 //連線錯誤與成功提示
-connection.connect(function(error){
-    if(error)
+pool.getConnection(function(error,connection){
+
+    try
     {
-        throw error;
+        if(error)
+        {
+            throw error;
+        }
+        else
+        {
+            console.log("MYSQL database is connected successfully!");
+        }
     }
-    else
+
+    finally
     {
-        console.log("MYSQL database is connected successfully!");
+        connection.release(connection);
     }
 });
 
 //啟用連線
-module.exports = connection;
+module.exports = pool;

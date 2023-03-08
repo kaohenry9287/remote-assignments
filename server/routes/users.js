@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const connection = require('../database');
+const pool = require('../database');
 const { check, validationResult } = require('express-validator');
 const bodyParser = require('body-parser');
 const cookieParser = require("cookie-parser");
@@ -36,62 +36,67 @@ router.post('/', (req, res)=> {
 
     //比對與回傳錯誤警告語
     if(name.search(nameRule) === -1){
-        res.status(400);
-        res.json({message: "Your username could only contain English alphabet and number!"});
+        res.status(400).json({message: "Your username could only contain English alphabet and number!"});
     };
     if (email.search(emailRule) === -1){
-        res.status(400);
-        res.json({message: "Email is not valid!"});
+        res.status(400).json({message: "Email is not valid!"});
     };
     if (password.search(passwordRule) === -1){
-        res.status(400);
-        res.json({message: "Password should contain at least three of the four character types:  1.Uppercase letter(A~Z)  2.Lowercase letter(a~z)  3.Numbers(0~9)  4.Symbols"});
+        res.status(400).json({message: "Password should contain at least three of the four character types:  1.Uppercase letter(A~Z)  2.Lowercase letter(a~z)  3.Numbers(0~9)  4.Symbols"});
     };
 
     //資料輸入正確，準備存成JSON型態並INSERT進database中(用bcrypt加密)
     bcrypt.hash(password, saltRounds, (err, hash) => {
         if (err) {console.log(err);}
 
-        connection.query(
-        "INSERT INTO `user`(name, email, password) VALUES (?, ?, ?)",
-        [name, email, hash],
-        function(err, results, fields) {
-            //存入資料庫失敗，進行錯誤處理
-            if (err)
-            { 
-            console.log(err);
-            res.status(403);
-            res.json({message: `Email Already Exists: 403 => ${err}`});
+        pool.getConnection(function(err, connection){
+
+            try{
+                connection.query(
+                    "INSERT INTO `user`(name, email, password) VALUES (?, ?, ?)",
+                    [name, email, hash],
+                    function(err, results, fields) {
+                        //存入資料庫失敗，進行錯誤處理
+                        if (err)
+                        { 
+                        console.log(err);
+                        res.status(403).json({message: `Email Already Exists: 403 => ${err}`});
+                        }
+                        //資料存入資料庫成功，擷取ID後redirect至有對應query String的route
+                        else
+                        {
+                        console.log("Store user's data into database successfully!");
+                        const userId = results.insertId;
+                        //根據userID找到正確的資料，顯示於頁面
+                        connection.query(
+                            'SELECT id, name, email FROM user AS u WHERE u.id = ?',
+                            [userId],
+                            function (err, results, fields) {
+                            if (err) 
+                            {
+                            res.status(400).json({message:`Client error response: 400 => ${err}`});
+                            }
+                            else
+                            {
+                            //Response Object(要放入Query API，含有id, name, email)
+                            Success_response.data.user = results[0];
+                            const date = req.headers['request-date'];
+                            Success_response.data.date = date;
+                            //進行跨端傳送前要記得把物件轉成JSON型態
+                            res.status(200).json(Success_response.data.user);
+                            console.log(`Get Response Successfully!`);
+                            };
+                        });
+                        }
+                    });
             }
-            //資料存入資料庫成功，擷取ID後redirect至有對應query String的route
-            else
+            //不管成功與否一定要release
+            finally
             {
-            console.log("Store user's data into database successfully!");
-            const userId = results.insertId;
-            //根據userID找到正確的資料，顯示於頁面
-            connection.query(
-                'SELECT id, name, email FROM user AS u WHERE u.id = ?',
-                [userId],
-                function (err, results, fields) {
-                if (err) 
-                {
-                res.status(400);
-                res.json({message:`Client error response: 400 => ${err}`});
-                }
-                else
-                {
-                //Response Object(要放入Query API，含有id, name, email)
-                Success_response.data.user = results[0];
-                const date = req.headers['request-date'];
-                Success_response.data.date = date;
-                res.status = 200;
-                console.log(`Get Response Successfully: ${res.status}`);
-                //進行跨端傳送前要記得把物件轉成JSON型態
-                res.json(Success_response.data.user);
-                };
-            });
+                pool.releaseConnection(connection);
             }
-        });
+
+        })
     });
     
 });  
@@ -100,34 +105,44 @@ router.post('/', (req, res)=> {
 // (GET) User Query API (依據網址中?id=req.query.id的部分來進行資料庫搜索，並顯示於頁面上)
 router.get('/', (req, res)=>{
         const userId = req.query.id;
-        connection.query(
-            'SELECT id, name, email FROM user AS u WHERE u.id = ?',
-            [userId],
-            function (err, results, fields) {
-            //用輸入的id沒有對應unique key => 此id不存在
-            if (err) 
+
+        pool.getConnection(function(err,connection){
+
+            try{
+                connection.query(
+                    'SELECT id, name, email FROM user AS u WHERE u.id = ?',
+                    [userId],
+                    function (err, results, fields) {
+                    //用輸入的id沒有對應unique key => 此id不存在
+                    if (err) 
+                    {
+                    res.status(400).json({message:`Client error response: 400 => ${err}`});
+                    }
+                    //確定results有拿到東西，不是一個空的
+                    //Response Object(要放入Query API，含有id, name, email)
+                    else if (results.length > 0) 
+                    {
+                    Success_response.data.user = results[0];
+                    const date = req.headers['request-date'];
+                    Success_response.data.date = date;
+                    //進行跨端傳送前要記得把物件轉成JSON型態
+                    res.status(200).json(Success_response);
+                    console.log(`Get Response Successfully!`);
+                    }
+                    //確定results是空的 => 此id值在資料庫裡還沒有對應的內容(超過目前有值的範圍)
+                    else
+                    {
+                        res.status(400).json({message:`User Not Existing: 403 => ${err}`});
+                    }
+                });
+            }
+            //不管成功與否一定要release
+            finally
             {
-            res.status(400);
-            res.json({message:`Client error response: 400 => ${err}`});
+                pool.releaseConnection(connection);
             }
-            //確定results有拿到東西，不是一個空的
-            //Response Object(要放入Query API，含有id, name, email)
-            else if (results.length > 0) 
-            {
-            Success_response.data.user = results[0];
-            const date = req.headers['request-date'];
-            Success_response.data.date = date;
-            res.status = 200;
-            console.log(`Get Response Successfully: ${res.status}`);
-            //進行跨端傳送前要記得把物件轉成JSON型態
-            res.json(Success_response);
-            }
-            //確定results是空的 => 此id值在資料庫裡還沒有對應的內容(超過目前有值的範圍)
-            else{
-                res.status(400);
-                res.json({message:`User Not Existing: 403 => ${err}`});
-            }
-        });
+
+        })
 });
 
 module.exports = router; 
