@@ -2,8 +2,8 @@ const http = require('http');
 const express = require('express');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
-const mysql = require('mysql2');
 const cors = require("cors");
+
 
 const app = express();
 
@@ -14,7 +14,7 @@ app.use(express.json());
 //確保資料能從前後端互相跨越傳送
 app.use(
   cors({
-    origin: ["http://localhost:3000"],
+    origin: true,
     methods: ["GET", "POST"],
     credentials: true,
   })
@@ -25,16 +25,17 @@ app.use(cookieParser());
 //healthcare需要
 const { createTerminus } = require('@godaddy/terminus');
 
-//使用route
-const mainRoutes = require('./routes');
+//使用user route
 const usersRoutes = require('./routes/users');
-
-app.use(mainRoutes);
 app.use('/users', usersRoutes)
+
+//HealthCheck服務相關
+app.get('/', (req, res) => {
+  res.send('ok')
+})
 
 const server = http.createServer(app);
 
-//HealthCheck服務相關
 function onSignal () {
   console.log('server is starting cleanup')
   // start cleanup of resource, like databases or file descriptors

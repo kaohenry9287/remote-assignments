@@ -4,7 +4,7 @@ import './App.css';
 
 function App() {
 
-  const [usernameSignup, setUsernameSignup] = useState("");
+  const [nameSignup, setNameSignup] = useState("");
   const [emailSignup, setEmailSignup] = useState("");
   const [passwordSignup, setPasswordSignup] = useState("");
 
@@ -16,8 +16,8 @@ function App() {
 
   //用Axios把前端輸入資料送給後端
   const signup = () => {
-    Axios.post("http://localhost:5000/users", {
-      username: usernameSignup,
+    Axios.post("http://54.167.174.166:5000/users", {
+      name: nameSignup,
       email: emailSignup,
       password: passwordSignup,
 
@@ -26,7 +26,7 @@ function App() {
         console.log(JSON.stringify(response.data));
       
     }).catch((error)=>{
-      if (error.response.data.message){
+      if (error.response){
         setSignupStatus(JSON.stringify(error.response.data.message));
         console.log(JSON.stringify(error.response.data.message));
       }
@@ -41,7 +41,7 @@ function App() {
         <div className="form">
           <div className="form-group">
             <label className="form-label">name: </label>
-            <input type="text" onChange={(e)=>{setUsernameSignup(e.target.value)}} className="form-control" name="name"></input>
+            <input type="text" onChange={(e)=>{setNameSignup(e.target.value)}} className="form-control" name="name"></input>
           </div>
           <div className="form-group">
             <label className="form-label">email: </label>
